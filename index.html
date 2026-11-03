@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="從海面下潛到馬里亞納海溝，認識海洋動物、海洋破壞，以及塑膠垃圾對海洋生物的傷害。">
+</head>
+<body>
+<title>下潛一萬公尺</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;900&family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: the page is a dive. Each section is a depth zone that gets darker; a fixed depth gauge reads out meters as you scroll. */
+:root {
+  color-scheme: dark;
+  --surface: #2f7f98;      /* sunlit water */
+  --twilight: #164a63;
+  --midnight: #0b2638;
+  --abyss: #06141f;
+  --trench: #03090f;
+  --ink: #e6f2f4;          /* body text on water */
+  --ink-dim: #9fbfc8;
+  --seaglass: #7fe0d4;     /* life, bubbles */
+  --plastic: #f4b23c;      /* contamination, the one loud colour */
+  --creature: #d3ecef;     /* animal bodies in illustrations */
+  --creature-dark: #5d8796;
+  --coral: #f09080;
+  --line: rgba(230, 242, 244, .16);
+  --panel: rgba(3, 14, 22, .38);
+  --display: "Noto Serif TC", "Songti TC", "PMingLiU", serif;
+  --body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0;
+  background: var(--trench);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 17px;
+  line-height: 1.75;
+}
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.25; }
+p { margin: 0; }
+a { color: var(--seaglass); }
+:focus-visible { outline: 2px solid var(--plastic); outline-offset: 3px; }
+
+.zone {
+  position: relative;
+  padding-block: clamp(64px, 10vw, 120px);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.inner { max-width: 1040px; margin: 0 auto; display: grid; gap: 40px; }
+.zone-tag {
+  font-family: var(--mono); font-size: 13px; letter-spacing: .12em;
+  color: var(--seaglass); text-transform: uppercase;
+  display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+}
+.zone-tag::before { content: ""; width: 28px; height: 1px; background: currentColor; }
+.zone h2 { font-size: clamp(30px, 5vw, 50px); font-weight: 900; }
+.lede { max-width: 38em; color: var(--ink-dim); font-size: 18px; }
+
+/* ---------- Hero / surface ---------- */
+.hero {
+  background: linear-gradient(180deg, #8fd0dc 0%, var(--surface) 38%, var(--twilight) 100%);
+  padding-block: 0;
+  overflow: hidden;
+}
+#sea { position: absolute; inset: 0; width: 100%; height: 100%; cursor: crosshair; touch-action: pan-y; }
+.hero .inner { position: relative; padding-block: clamp(96px, 14vw, 170px) clamp(72px, 10vw, 120px); pointer-events: none; }
+.hero .inner > * { pointer-events: auto; }
+.hero h1 {
+  font-size: clamp(46px, 10vw, 112px);
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: .02em;
+  text-shadow: 0 2px 30px rgba(6, 40, 60, .35);
+}
+.hero h1 em { font-style: normal; color: var(--plastic); }
+.hero .lede { color: #eaf7f9; font-size: clamp(18px, 2.2vw, 21px); }
+.pickup {
+  display: inline-flex; gap: 14px; align-items: baseline; flex-wrap: wrap;
+  font-family: var(--mono); font-size: 14px; color: #eaf7f9;
+  background: rgba(6, 30, 45, .45); border: 1px solid rgba(255,255,255,.22);
+  padding: 10px 16px; border-radius: 4px; justify-self: start; backdrop-filter: blur(4px);
+}
+.pickup b { font-size: 26px; color: var(--plastic); font-variant-numeric: tabular-nums; }
+
+/* ---------- Depth gauge ---------- */
+.gauge {
+  position: fixed; z-index: 20;
+  right: max(14px, env(safe-area-inset-right, 0px));
+  top: 50%; transform: translateY(-50%);
+  display: grid; justify-items: end; gap: 6px;
+  font-family: var(--mono); pointer-events: none;
+}
+.gauge .num { font-size: 22px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; text-shadow: 0 1px 8px rgba(0,0,0,.5); }
+.gauge .lbl { font-size: 11px; letter-spacing: .14em; color: var(--seaglass); }
+.gauge .track { width: 2px; height: 160px; background: var(--line); position: relative; }
+.gauge .fill { position: absolute; left: 0; top: 0; width: 2px; background: var(--seaglass); }
+@media (max-width: 860px) {
+  .gauge { top: auto; bottom: max(12px, env(safe-area-inset-bottom, 0px)); transform: none; grid-auto-flow: column; align-items: baseline;
+    background: rgba(3, 12, 20, .72); padding: 6px 12px; border-radius: 4px; backdrop-filter: blur(4px); }
+  .gauge .track { display: none; }
+  .gauge .num { font-size: 16px; }
+}
+
+/* ---------- Animals ---------- */
+.z-sun { background: linear-gradient(180deg, var(--twilight), #10405a); }
+.animals { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); }
+.animal { background: #123f57; padding: 26px 24px 28px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+.animal header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.animal h3 { font-size: 24px; font-weight: 900; }
+.animal .range { font-family: var(--mono); font-size: 12px; color: var(--seaglass); white-space: nowrap; }
+.animal .harm { display: inline-block; font-size: 13px; font-weight: 700; letter-spacing: .06em; color: #1b1405; background: var(--plastic); padding: 1px 8px; border-radius: 2px; justify-self: start; }
+.animal p { color: var(--ink-dim); font-size: 15.5px; }
+.pic { display: block; width: calc(100% + 48px); max-width: none; margin: -26px -24px 6px; aspect-ratio: 12 / 7; height: auto; }
+.media { position: relative; margin: -26px -24px 6px; aspect-ratio: 12 / 7; max-width: none; overflow: hidden; }
+.media .pic { margin: 0; width: 100%; height: 100%; }
+.media img { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: cover; }
+.media .credit { position: absolute; right: 0; bottom: 0; font-family: var(--mono); font-size: 10.5px; line-height: 1.4; padding: 3px 8px; background: rgba(3, 14, 22, .7); color: var(--ink-dim); text-decoration: none; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.media .credit:hover { color: var(--ink); }
+.media.nophoto img, .media.nophoto .credit { display: none; }
+.pic .plastic { fill: rgba(244, 178, 60, .28); stroke: var(--plastic); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.pic .body { fill: var(--creature); }
+.pic .shade { fill: var(--creature-dark); }
+.pic .line { fill: none; stroke: var(--creature-dark); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---------- Threats ---------- */
+.z-twilight { background: linear-gradient(180deg, #10405a, var(--midnight)); }
+.threats { display: grid; gap: 0; border-top: 1px solid var(--line); }
+.threat { display: grid; grid-template-columns: minmax(150px, 220px) 1fr minmax(120px, 170px); gap: 24px; padding-block: 26px; border-bottom: 1px solid var(--line); align-items: baseline; }
+.threat h3 { font-size: 22px; }
+.threat p { color: var(--ink-dim); min-width: 0; }
+.threat .fig { font-family: var(--mono); font-size: 13px; color: var(--seaglass); text-align: right; }
+.threat .fig b { display: block; font-size: 24px; color: var(--ink); font-weight: 600; }
+@media (max-width: 720px) {
+  .threat { grid-template-columns: 1fr; gap: 8px; }
+  .threat .fig { text-align: left; }
+}
+
+/* ---------- Decomposition chart ---------- */
+.z-midnight { background: linear-gradient(180deg, var(--midnight), var(--abyss)); }
+.decay { display: grid; gap: 14px; }
+.row { display: grid; grid-template-columns: minmax(96px, 150px) 1fr; gap: 16px; align-items: center; }
+.row .name { font-size: 15px; }
+.bar-wrap { position: relative; height: 26px; }
+.bar { height: 100%; background: var(--plastic); border-radius: 0 2px 2px 0; transform-origin: left; display: flex; align-items: center; }
+.bar.org { background: var(--seaglass); }
+.row .yrs { position: absolute; top: 50%; transform: translateY(-50%); font-family: var(--mono); font-size: 13px; white-space: nowrap; padding-left: 8px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.axis { display: grid; grid-template-columns: minmax(96px, 150px) 1fr; gap: 16px; }
+.axis .ticks { position: relative; height: 20px; border-top: 1px solid var(--line); font-family: var(--mono); font-size: 11px; color: var(--ink-dim); }
+.axis .ticks span { position: absolute; top: 4px; transform: translateX(-50%); }
+.axis .ticks span:first-child { transform: none; }
+.axis .ticks span:last-child { transform: translateX(-100%); }
+.note { font-size: 13px; color: var(--ink-dim); }
+@media (prefers-reduced-motion: no-preference) {
+  .decay.go .bar { animation: grow 1.2s cubic-bezier(.2,.7,.2,1) both; }
+  @keyframes grow { from { transform: scaleX(.02); } to { transform: scaleX(1); } }
+}
+
+/* ---------- Food chain ---------- */
+.z-abyss { background: linear-gradient(180deg, var(--abyss), #050f18); }
+.chain { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0; border: 1px solid var(--line); }
+.link { flex: 1 1 170px; padding: 22px 20px; display: grid; gap: 6px; align-content: start; border-right: 1px solid var(--line); min-width: 0; }
+.link:last-child { border-right: 0; background: rgba(244, 178, 60, .1); }
+.link .step { font-family: var(--mono); font-size: 12px; color: var(--seaglass); letter-spacing: .1em; }
+.link:last-child .step { color: var(--plastic); }
+.link h3 { font-size: 20px; }
+.link p { font-size: 14.5px; color: var(--ink-dim); }
+@media (max-width: 760px) { .link { border-right: 0; border-bottom: 1px solid var(--line); } .link:last-child { border-bottom: 0; } }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 32px; }
+.stat { display: grid; gap: 6px; border-left: 2px solid var(--plastic); padding-left: 18px; }
+.stat b { font-family: var(--display); font-size: clamp(34px, 5vw, 48px); font-weight: 900; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.stat span { color: var(--ink-dim); font-size: 15px; }
+.stat small { font-family: var(--mono); font-size: 11px; color: var(--ink-dim); opacity: .8; }
+
+/* ---------- Actions ---------- */
+.z-hadal { background: var(--trench); }
+.deepest { display: grid; grid-template-columns: auto 1fr; gap: 32px; align-items: center; padding: 32px; border: 1px solid var(--line); background: var(--panel); }
+.deepest .m { font-family: var(--mono); font-size: clamp(40px, 7vw, 72px); font-weight: 600; color: var(--plastic); line-height: 1; font-variant-numeric: tabular-nums; }
+.deepest p { color: var(--ink-dim); max-width: 34em; }
+.deepest h3 { font-size: 22px; margin-bottom: 8px; color: var(--ink); }
+@media (max-width: 640px) { .deepest { grid-template-columns: 1fr; padding: 22px; gap: 16px; } }
+
+.pledge { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+.pledge label {
+  display: grid; grid-template-columns: 26px 1fr; gap: 14px; align-items: start;
+  padding: 18px 18px; border: 1px solid var(--line); cursor: pointer;
+  transition: border-color .2s, background .2s;
+}
+.pledge label:hover { border-color: rgba(127, 224, 212, .5); }
+.pledge input { appearance: none; width: 22px; height: 22px; margin: 3px 0 0; border: 1.5px solid var(--seaglass); border-radius: 50%; display: grid; place-content: center; cursor: pointer; }
+.pledge input::after { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--seaglass); transform: scale(0); transition: transform .15s; }
+.pledge input:checked::after { transform: scale(1); }
+.pledge label:has(input:checked) { background: rgba(127, 224, 212, .08); border-color: var(--seaglass); }
+.pledge strong { display: block; font-size: 16.5px; }
+.pledge span { font-size: 14px; color: var(--ink-dim); }
+.tally { font-family: var(--mono); font-size: 14px; color: var(--ink-dim); }
+.tally b { color: var(--seaglass); font-size: 18px; }
+
+footer { padding-block: 40px 80px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); background: var(--trench); border-top: 1px solid var(--line); }
+footer .inner { gap: 12px; }
+footer h3 { font-family: var(--mono); font-size: 12px; letter-spacing: .14em; color: var(--seaglass); font-weight: 600; }
+footer ol { margin: 0; padding-left: 20px; font-size: 13px; color: var(--ink-dim); display: grid; gap: 4px; }
+</style>
+
+<div class="gauge" aria-hidden="true">
+  <span class="lbl">深度</span>
+  <span class="num" id="depthNum">0 m</span>
+  <div class="track"><div class="fill" id="depthFill"></div></div>
+</div>
+
+<!-- ========== 0 m ========== -->
+<section class="zone hero" data-depth="0" id="surface">
+  <canvas id="sea" aria-label="海面動畫：點擊漂浮的垃圾把它撿起來"></canvas>
+  <div class="inner">
+    <div class="zone-tag">0 m · 海面</div>
+    <h1>下潛<br>一萬公尺，<br>處處是<em>塑膠</em></h1>
+    <p class="lede">每一分鐘，大約有一整台垃圾車份量的塑膠被倒進海裡。牠們從海面漂到海溝最深處，沿途纏住海龜、塞滿海鳥的胃，再變成看不見的微塑膠，回到我們的餐桌。往下捲動，一起下潛。</p>
+    <div class="pickup" role="status" aria-live="polite">點擊海面上的黃色垃圾撿起它 <span>已撿起 <b id="count">0</b> 件</span></div>
+  </div>
+</section>
+
+<!-- ========== 表層帶 ========== -->
+<section class="zone z-sun" data-depth="200" id="animals">
+  <div class="inner">
+    <div class="zone-tag">0–200 m · 表層帶 · 陽光可及</div>
+    <h2>住在海裡的鄰居</h2>
+    <p class="lede">這些動物分布在不同深度，卻被同一種東西威脅。每張卡片標出牠們活動的深度範圍，以及塑膠最常造成的傷害。</p>
+    <div class="animals">
+      <article class="animal">
+        <svg class="pic" viewBox="0 0 240 140" role="img" aria-label="綠蠵龜游向一個像水母的塑膠袋" data-photo="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Green_sea_turtle_%28Chelonia_mydas%29_Moorea.jpg/960px-Green_sea_turtle_%28Chelonia_mydas%29_Moorea.jpg" data-alt="在法屬玻里尼西亞茉莉亞島海中游泳的綠蠵龜" data-credit="Charles J. Sharp · CC BY-SA 4.0" data-link="https://commons.wikimedia.org/wiki/File:Green_sea_turtle_(Chelonia_mydas)_Moorea.jpg">
+          <defs><linearGradient id="gSun" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a8ea6"/><stop offset="1" stop-color="#164a63"/></linearGradient></defs>
+          <rect width="240" height="140" fill="url(#gSun)"/>
+          <path d="M0 0 L40 0 L90 140 L60 140Z M120 0 L150 0 L190 140 L170 140Z" fill="#ffffff" opacity=".07"/>
+          <path class="body" d="M92 58 C72 38 50 30 34 33 C48 46 66 58 86 66Z"/>
+          <path class="body" d="M92 94 C74 114 54 122 40 119 C54 106 68 96 86 86Z"/>
+          <path class="body" d="M64 82 C54 86 44 94 40 102 C52 100 62 94 70 88Z"/>
+          <ellipse class="body" cx="104" cy="76" rx="44" ry="27"/>
+          <path class="line" d="M84 62 L104 54 L124 62 L124 90 L104 98 L84 90Z M104 54 V98 M84 76 H124" opacity=".7"/>
+          <path class="body" d="M144 68 C152 58 168 58 174 66 C178 73 174 81 164 83 C155 84 149 79 144 77Z"/>
+          <circle cx="166" cy="68" r="2.2" fill="#164a63"/>
+          <path class="plastic" d="M196 38 Q208 30 220 38 L222 48 Q226 74 216 96 Q211 86 207 98 Q203 86 198 98 Q188 76 194 48Z"/>
+          <path class="plastic" d="M200 38 Q200 26 206 30 M216 38 Q217 26 211 30" fill="none"/>
+        </svg>
+        <header><h3>綠蠵龜</h3><span class="range">0–110 m</span></header>
+        <span class="harm">誤食</span>
+        <p>在水中，漂浮的塑膠袋和牠愛吃的水母幾乎一模一樣。研究估計，海龜只要吞下 14 片塑膠，死亡風險就會升高到一半。塑膠在腸道裡堵塞、產氣，讓牠浮在水面無法下潛。</p>
+      </article>
+      <article class="animal">
+        <svg class="pic" viewBox="0 0 240 140" role="img" aria-label="信天翁飛過漂滿瓶蓋的海面" data-photo="https://upload.wikimedia.org/wikipedia/commons/1/18/Black_footed_albatross1.jpg" data-alt="一隻黑背信天翁" data-credit="Jlfutari · CC BY-SA 3.0" data-link="https://commons.wikimedia.org/wiki/File:Black_footed_albatross1.jpg">
+          <defs><linearGradient id="gSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fcbd8"/><stop offset=".72" stop-color="#4e9db2"/><stop offset=".72" stop-color="#2b7590"/><stop offset="1" stop-color="#164a63"/></linearGradient></defs>
+          <rect width="240" height="140" fill="url(#gSky)"/>
+          <path class="shade" d="M14 44 Q64 26 112 56 L104 64 Q64 42 14 44Z"/>
+          <path class="shade" d="M226 40 Q172 26 132 56 L140 64 Q176 42 226 40Z"/>
+          <ellipse class="body" cx="122" cy="62" rx="24" ry="9"/>
+          <circle class="body" cx="146" cy="58" r="7"/>
+          <path d="M152 57 L166 60 L152 61Z" fill="#f2d58a"/>
+          <circle cx="148" cy="56" r="1.4" fill="#164a63"/>
+          <path d="M98 62 L86 58 L88 66Z" class="body"/>
+          <path d="M0 101 Q20 96 40 101 T80 101 T120 101 T160 101 T200 101 T240 101" fill="none" stroke="#ffffff" stroke-opacity=".35" stroke-width="1.5"/>
+          <circle class="plastic" cx="52" cy="112" r="5"/><circle class="plastic" cx="96" cy="122" r="4"/><circle class="plastic" cx="140" cy="108" r="5"/><circle class="plastic" cx="184" cy="124" r="4.5"/><rect class="plastic" x="200" y="106" width="16" height="6" rx="2"/><circle class="plastic" cx="24" cy="128" r="3.5"/>
+        </svg>
+        <header><h3>黑背信天翁</h3><span class="range">海面覓食</span></header>
+        <span class="harm">誤食 · 餵給雛鳥</span>
+        <p>親鳥從海面撈起瓶蓋與打火機，誤當成魷魚卵帶回中途島餵雛鳥。許多幼鳥死亡後，屍體腐爛，胃裡的塑膠仍完整留在原地。</p>
+      </article>
+      <article class="animal">
+        <svg class="pic" viewBox="0 0 240 140" role="img" aria-label="港海豹脖子上套著塑膠環" data-photo="https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Common_seal_%28Phoca_vitulina%29_2.jpg/960px-Common_seal_%28Phoca_vitulina%29_2.jpg" data-alt="趴在岸邊的港海豹" data-credit="Charles J. Sharp · CC BY-SA 4.0" data-link="https://commons.wikimedia.org/wiki/File:Common_seal_(Phoca_vitulina)_2.jpg">
+          <defs><linearGradient id="gSeal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2e7f98"/><stop offset="1" stop-color="#123f57"/></linearGradient></defs>
+          <rect width="240" height="140" fill="url(#gSeal)"/>
+          <path class="body" d="M36 104 C46 80 84 70 122 72 C150 73 164 62 170 48 C176 36 194 34 200 46 C206 58 200 70 192 78 C182 96 160 108 122 110 C92 112 54 112 36 104Z"/>
+          <path class="body" d="M38 104 L16 90 L22 106 L12 118Z"/>
+          <path class="shade" d="M120 104 C128 116 140 122 150 120 C144 112 136 106 130 102Z" opacity=".7"/>
+          <circle cx="192" cy="47" r="2.6" fill="#123f57"/>
+          <circle cx="201" cy="55" r="1.8" fill="#123f57"/>
+          <path class="line" d="M198 58 L212 54 M198 60 L212 61" stroke-width="1"/>
+          <ellipse cx="176" cy="74" rx="8" ry="18" transform="rotate(28 176 74)" fill="none" stroke="var(--plastic)" stroke-width="4.5"/>
+          <path d="M170 88 Q168 92 172 94" fill="none" stroke="var(--coral)" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="60" cy="40" r="3" fill="none" stroke="#ffffff" stroke-opacity=".5"/><circle cx="68" cy="26" r="2" fill="none" stroke="#ffffff" stroke-opacity=".5"/>
+        </svg>
+        <header><h3>港海豹</h3><span class="range">0–500 m</span></header>
+        <span class="harm">纏繞</span>
+        <p>好奇的海豹會把頭伸進塑膠環與破漁網裡玩耍。隨著身體長大，套在脖子上的圈愈勒愈緊，割開皮肉，最後窒息或感染致死。</p>
+      </article>
+      <article class="animal">
+        <svg class="pic" viewBox="0 0 240 140" role="img" aria-label="健康的粉色珊瑚旁邊，掛著塑膠袋的珊瑚已經白化" data-photo="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Coral_Outcrop_Flynn_Reef.jpg/960px-Coral_Outcrop_Flynn_Reef.jpg" data-alt="澳洲大堡礁弗林礁的珊瑚群" data-credit="Toby Hudson · CC BY-SA 3.0" data-link="https://commons.wikimedia.org/wiki/File:Coral_Outcrop_Flynn_Reef.jpg">
+          <defs><linearGradient id="gReef" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a93aa"/><stop offset="1" stop-color="#1a5670"/></linearGradient></defs>
+          <rect width="240" height="140" fill="url(#gReef)"/>
+          <path d="M0 120 Q60 110 120 118 T240 116 V140 H0Z" fill="#c9b98e" opacity=".55"/>
+          <g fill="none" stroke="var(--coral)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M60 120 V80 L44 58 M60 92 L78 66 L84 46 M78 66 L96 60 M44 58 L40 40 M44 58 L28 50"/>
+            <path d="M100 122 V100 L112 84 M100 104 L88 92"/>
+          </g>
+          <g fill="none" stroke="#eef6f6" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M168 120 V78 L150 56 M168 90 L188 64 L192 44 M188 64 L206 60 M150 56 L146 38 M150 56 L134 48"/>
+          </g>
+          <path class="plastic" d="M182 52 Q196 46 210 54 Q214 70 206 84 Q200 76 196 86 Q190 74 184 82 Q176 66 182 52Z"/>
+        </svg>
+        <header><h3>珊瑚礁</h3><span class="range">0–50 m</span></header>
+        <span class="harm">感染 · 白化</span>
+        <p>珊瑚接觸塑膠後，罹患疾病的機率從約 4% 升到 89%。塑膠擋住陽光、劃傷組織，也成為病原體的運輸船。海水升溫造成的白化，讓情況雪上加霜。</p>
+      </article>
+      <article class="animal">
+        <svg class="pic" viewBox="0 0 240 140" role="img" aria-label="抹香鯨游向一張漂流的廢棄漁網" data-photo="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Mother_and_baby_sperm_whale.jpg/960px-Mother_and_baby_sperm_whale.jpg" data-alt="抹香鯨母子在海中並肩游泳" data-credit="Gabriel Barathieu · CC BY-SA 2.0" data-link="https://commons.wikimedia.org/wiki/File:Mother_and_baby_sperm_whale.jpg">
+          <defs><linearGradient id="gWhale" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#164a63"/><stop offset="1" stop-color="#0b2638"/></linearGradient></defs>
+          <rect width="240" height="140" fill="url(#gWhale)"/>
+          <path class="shade" d="M92 60 Q92 42 112 42 L176 44 Q204 48 220 64 L234 50 Q230 66 236 84 L218 74 Q198 92 160 92 L112 90 Q92 88 92 74Z"/>
+          <path d="M104 80 L150 82" stroke="#0b2638" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="132" cy="68" r="2.2" fill="#0b2638"/>
+          <g fill="none" stroke="var(--plastic)" stroke-width="1.6" opacity=".9">
+            <path d="M14 30 Q40 22 66 34 Q76 70 62 112 Q38 120 18 108 Q6 70 14 30Z" stroke-width="2.5"/>
+            <path d="M12 46 Q40 40 70 50 M10 64 Q40 58 72 68 M10 82 Q40 76 70 86 M14 98 Q40 94 66 102"/>
+            <path d="M26 26 Q22 70 28 114 M42 24 Q38 70 42 118 M56 28 Q54 70 54 116"/>
+          </g>
+        </svg>
+        <header><h3>抹香鯨</h3><span class="range">0–2,000 m</span></header>
+        <span class="harm">誤食</span>
+        <p>擱淺的抹香鯨胃裡，曾被發現數十公斤的漁網、塑膠布與溫室覆膜。這些東西無法消化，鯨魚會在胃滿的情況下活活餓死。</p>
+      </article>
+      <article class="animal">
+        <svg class="pic" viewBox="0 0 240 140" role="img" aria-label="深海端足類，透明身體裡看得到塑膠纖維" data-photo="https://upload.wikimedia.org/wikipedia/commons/3/3f/Gammarus_roeselii.jpg" data-alt="端足類動物（照片為淡水種鉤蝦，深海種外形相近）" data-credit="Michal Maňas · CC BY 2.5" data-link="https://commons.wikimedia.org/wiki/File:Gammarus_roeselii.jpg">
+          <rect width="240" height="140" fill="#04101a"/>
+          <g opacity=".5" fill="#7fe0d4"><circle cx="30" cy="30" r="1.2"/><circle cx="200" cy="22" r="1"/><circle cx="214" cy="110" r="1.4"/><circle cx="22" cy="118" r="1"/><circle cx="120" cy="16" r="1"/></g>
+          <path d="M60 92 Q74 48 124 44 Q172 42 194 76 Q198 90 186 92 Q166 66 124 66 Q88 68 76 98 Q66 104 60 92Z" fill="var(--creature)" opacity=".85"/>
+          <path class="line" d="M86 62 L92 76 M102 52 L104 68 M120 46 L120 66 M138 46 L136 66 M156 50 L150 69 M172 58 L164 74"/>
+          <path class="line" d="M90 82 L86 104 M106 72 L104 98 M124 68 L124 96 M142 69 L146 96 M158 74 L166 98 M176 82 L186 100" stroke="var(--creature)" opacity=".7"/>
+          <path class="line" d="M66 86 Q40 70 24 76 M66 82 Q46 58 30 56" stroke="var(--creature)" opacity=".8"/>
+          <circle cx="72" cy="80" r="2.6" fill="#04101a"/>
+          <path d="M94 70 Q102 60 112 62 T130 58 T148 62 T166 70" fill="none" stroke="var(--plastic)" stroke-width="2.2" stroke-linecap="round"/>
+          <path d="M110 58 Q118 54 124 60" fill="none" stroke="var(--plastic)" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        <header><h3>端足類</h3><span class="range">6,000–11,000 m</span></header>
+        <span class="harm">微塑膠</span>
+        <p>這種長得像小蝦的生物住在地球最深的海溝。科學家在馬里亞納海溝採到的個體中，每一隻腸道裡都找到了塑膠纖維。</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 中層帶 ========== -->
+<section class="zone z-twilight" data-depth="1000" id="threats">
+  <div class="inner">
+    <div class="zone-tag">200–1,000 m · 中層帶 · 微光</div>
+    <h2>海洋正在被破壞</h2>
+    <p class="lede">塑膠只是其中一項。這些壓力同時發生，彼此疊加，讓海洋生物更難復原。</p>
+    <div class="threats">
+      <div class="threat"><h3>塑膠垃圾</h3><p>瓶子、袋子、外帶杯與包裝從河川與海灘流入大海，被洋流集中成巨大的垃圾帶，也碎裂成微塑膠散布到每一個角落。</p><div class="fig"><b>800 萬噸</b>每年流入海洋</div></div>
+      <div class="threat"><h3>幽靈漁網</h3><p>遺失或丟棄的漁具繼續在海裡「捕魚」數十年，纏住海龜、鯨豚和鯊魚，沒有人會回來收網。</p><div class="fig"><b>46%</b>太平洋垃圾帶重量來自漁具</div></div>
+      <div class="threat"><h3>過度捕撈</h3><p>捕撈速度超過魚群繁殖的速度，加上混獲，讓食物網的上層與下層同時被掏空。</p><div class="fig"><b>約 1/3</b>魚群遭過度捕撈</div></div>
+      <div class="threat"><h3>海水暖化與酸化</h3><p>海洋吸收了大量熱與二氧化碳。水溫升高引發珊瑚白化，酸化讓貝類與珊瑚難以形成骨骼。</p><div class="fig"><b>14%</b>珊瑚在 2009–2018 消失</div></div>
+      <div class="threat"><h3>石油與化學污染</h3><p>漏油、農藥與工業廢水讓海鳥羽毛失去防水力，也在魚類體內累積毒素。</p><div class="fig"><b>400+</b>處缺氧「死區」</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 深層帶 ========== -->
+<section class="zone z-midnight" data-depth="4000" id="decay">
+  <div class="inner">
+    <div class="zone-tag">1,000–4,000 m · 深層帶 · 永夜</div>
+    <h2>用一次，留幾百年</h2>
+    <p class="lede">一根吸管你只用了幾分鐘。它在海裡要分解成肉眼看不見的碎片，需要的時間比你的曾曾曾祖父活過的年代還長。下面的長條依同一比例畫出，綠色是天然材質，黃色是塑膠。</p>
+    <div class="decay" id="decayChart"></div>
+    <div class="axis" aria-hidden="true"><span></span><div class="ticks"><span style="left:0">0</span><span style="left:33.33%">200 年</span><span style="left:66.67%">400 年</span><span style="left:100%">600 年</span></div></div>
+    <p class="note">分解時間為海洋環境下的估計值（資料：NOAA／Woods Hole Sea Grant）。塑膠不會真正消失，只會碎裂成愈來愈小的微塑膠。</p>
+  </div>
+</section>
+
+<!-- ========== 深淵帶 ========== -->
+<section class="zone z-abyss" data-depth="6000" id="chain">
+  <div class="inner">
+    <div class="zone-tag">4,000–6,000 m · 深淵帶</div>
+    <h2>微塑膠回到餐桌</h2>
+    <p class="lede">小於 5 毫米的塑膠碎片會被浮游生物吃下，再一層一層往上傳。塑膠表面還會吸附農藥與工業化學物質，濃度隨食物鏈放大。</p>
+    <div class="chain">
+      <div class="link"><span class="step">起點</span><h3>塑膠碎裂</h3><p>陽光與海浪把瓶子、袋子打碎成微塑膠。</p></div>
+      <div class="link"><span class="step">→ 吃下</span><h3>浮游動物</h3><p>把微塑膠誤認為藻類，一口吞下。</p></div>
+      <div class="link"><span class="step">→ 吃下</span><h3>小魚、貝類</h3><p>濾食海水或捕食浮游動物，塑膠一起進入體內。</p></div>
+      <div class="link"><span class="step">→ 吃下</span><h3>鮪魚、海鳥</h3><p>大型掠食者累積更多塑膠與毒素。</p></div>
+      <div class="link"><span class="step">終點</span><h3>人類</h3><p>海鮮、海鹽甚至飲用水裡，都已驗出微塑膠。</p></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><b>100 萬+</b><span>海鳥每年因塑膠死亡</span><small>UNESCO</small></div>
+      <div class="stat"><b>10 萬+</b><span>海洋哺乳動物每年因塑膠死亡</span><small>UNESCO</small></div>
+      <div class="stat"><b>160 萬 km²</b><span>太平洋垃圾帶面積，約 44 個台灣</span><small>Lebreton et al., 2018</small></div>
+      <div class="stat"><b>2050</b><span>依重量計，海中塑膠可能比魚還多</span><small>Ellen MacArthur Foundation</small></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 超深淵帶 ========== -->
+<section class="zone z-hadal" data-depth="10898" id="act">
+  <div class="inner">
+    <div class="zone-tag">6,000–11,000 m · 超深淵帶 · 海溝</div>
+    <div class="deepest">
+      <div class="m">10,898 m</div>
+      <div>
+        <h3>人類到過最深的地方，已經有人類的垃圾</h3>
+        <p>科學家整理深海影像資料時，在馬里亞納海溝 10,898 公尺深處拍到一個塑膠袋。那裡沒有陽光，水壓是海面的一千多倍，塑膠卻比我們先到。</p>
+      </div>
+    </div>
+    <h2>現在，換你浮上來行動</h2>
+    <p class="lede">海洋的問題很大，但每一件沒有進入海裡的塑膠，都少了一次纏住或噎住動物的機會。勾選你願意做到的事。</p>
+    <div class="pledge" id="pledge">
+      <label><input type="checkbox" id="p1"><div><strong>自備水壺和環保杯</strong><span>一年少用數百個寶特瓶與外帶杯。</span></div></label>
+      <label><input type="checkbox" id="p2"><div><strong>拒絕吸管與塑膠餐具</strong><span>吸管是淨灘最常撿到的垃圾之一。</span></div></label>
+      <label><input type="checkbox" id="p3"><div><strong>帶購物袋出門</strong><span>塑膠袋在水中最像海龜的水母。</span></div></label>
+      <label><input type="checkbox" id="p4"><div><strong>不亂丟垃圾，做好分類回收</strong><span>街上的垃圾會順著水溝與河川流到海裡。</span></div></label>
+      <label><input type="checkbox" id="p5"><div><strong>參加一次淨灘</strong><span>撿起來的每一件，都不會再漂回海裡。</span></div></label>
+      <label><input type="checkbox" id="p6"><div><strong>選擇永續海鮮</strong><span>認明 MSC 等永續標章，減少過度捕撈與混獲。</span></div></label>
+    </div>
+    <p class="tally" role="status" aria-live="polite">你已承諾 <b id="pledgeCount">0</b> / 6 項行動</p>
+  </div>
+</section>
+
+<footer>
+  <div class="inner">
+    <h3>資料來源</h3>
+    <ol>
+      <li>Jambeck et al. (2015), Plastic waste inputs from land into the ocean, <i>Science</i>.</li>
+      <li>Lebreton et al. (2018), Evidence that the Great Pacific Garbage Patch is rapidly accumulating plastic, <i>Scientific Reports</i>.</li>
+      <li>Lamb et al. (2018), Plastic waste associated with disease on coral reefs, <i>Science</i>.</li>
+      <li>Wilcox et al. (2018), A quantitative analysis linking sea turtle mortality and plastic debris ingestion, <i>Scientific Reports</i>.</li>
+      <li>Chiba et al. (2018), Human footprint in the abyss: 30 year records of deep-sea plastic debris, <i>Marine Policy</i>.</li>
+      <li>Jamieson et al. (2019), Microplastics and synthetic particles ingested by deep-sea amphipods, <i>Royal Society Open Science</i>.</li>
+      <li>Ellen MacArthur Foundation (2016), <i>The New Plastics Economy</i>；UNESCO Ocean Literacy；FAO <i>State of World Fisheries</i>；GCRMN (2021)。</li>
+    </ol>
+    <h3>照片來源</h3>
+    <ol>
+      <li>動物照片皆來自 Wikimedia Commons，依各自的創用 CC 授權使用，作者與授權標示在每張照片右下角，點擊可查看原始頁面。</li>
+    </ol>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- Hero sea canvas ---------- */
+  const cv = document.getElementById('sea');
+  const ctx = cv.getContext('2d');
+  const countEl = document.getElementById('count');
+  let W = 0, H = 0, dpr = 1, picked = 0;
+  const bubbles = [], trash = [];
+  const kinds = ['bottle', 'bag', 'cap', 'straw', 'ring'];
+
+  function resize() {
+    const r = cv.getBoundingClientRect();
+    dpr = Math.min(devicePixelRatio || 1, 2);
+    W = r.width; H = r.height;
+    cv.width = W * dpr; cv.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  function newTrash(anyY) {
+    return { x: Math.random() * W, y: anyY ? Math.random() * H : -30,
+      vy: .15 + Math.random() * .35, vx: (Math.random() - .5) * .25,
+      rot: Math.random() * 6.28, vr: (Math.random() - .5) * .01,
+      s: 14 + Math.random() * 14, k: kinds[(Math.random() * kinds.length) | 0], fade: 1, gone: false };
+  }
+  function newBubble(anyY) {
+    return { x: Math.random() * W, y: anyY ? Math.random() * H : H + 10, r: 1 + Math.random() * 3.5, vy: .3 + Math.random() * .8, ph: Math.random() * 6 };
+  }
+  function seed() {
+    bubbles.length = 0; trash.length = 0;
+    const n = Math.round(W / 40);
+    for (let i = 0; i < n; i++) bubbles.push(newBubble(true));
+    const t = Math.max(10, Math.round(W / 70));
+    for (let i = 0; i < t; i++) trash.push(newTrash(true));
+  }
+  function drawTrash(t) {
+    ctx.save();
+    ctx.translate(t.x, t.y); ctx.rotate(t.rot); ctx.globalAlpha = t.fade;
+    const s = t.s, c = '#f4b23c';
+    ctx.strokeStyle = c; ctx.fillStyle = 'rgba(244,178,60,.28)'; ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    if (t.k === 'bottle') {
+      ctx.roundRect(-s * .3, -s * .5, s * .6, s, s * .12); ctx.rect(-s * .12, -s * .72, s * .24, s * .22);
+    } else if (t.k === 'bag') {
+      ctx.moveTo(-s * .5, -s * .3); ctx.quadraticCurveTo(0, -s * .1, s * .5, -s * .3);
+      ctx.quadraticCurveTo(s * .6, s * .3, s * .2, s * .55); ctx.quadraticCurveTo(0, s * .35, -s * .25, s * .6);
+      ctx.quadraticCurveTo(-s * .6, s * .3, -s * .5, -s * .3);
+    } else if (t.k === 'cap') {
+      ctx.arc(0, 0, s * .28, 0, 6.28);
+    } else if (t.k === 'straw') {
+      ctx.rect(-s * .6, -s * .06, s * 1.2, s * .12);
+    } else {
+      for (let i = 0; i < 3; i++) { ctx.moveTo(-s * .45 + i * s * .3 + s * .15, 0); ctx.arc(-s * .45 + i * s * .3, 0, s * .15, 0, 6.28); }
+    }
+    ctx.fill(); ctx.stroke(); ctx.restore();
+  }
+  let last = 0;
+  function frame(ts) {
+    const dt = Math.min(3, (ts - last) / 16.7 || 1); last = ts;
+    ctx.clearRect(0, 0, W, H);
+    // light rays
+    const g = ctx.createLinearGradient(0, 0, 0, H * .7);
+    g.addColorStop(0, 'rgba(255,255,255,.18)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g;
+    for (let i = 0; i < 4; i++) {
+      const x = (W / 4) * i + Math.sin(ts / 4000 + i) * 40;
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + 60, 0); ctx.lineTo(x + 160, H * .7); ctx.lineTo(x + 40, H * .7); ctx.fill();
+    }
+    for (const b of bubbles) {
+      if (!reduce) { b.y -= b.vy * dt; b.x += Math.sin(ts / 700 + b.ph) * .2; }
+      if (b.y < -10) Object.assign(b, newBubble(false));
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 6.28);
+      ctx.strokeStyle = 'rgba(220,250,255,.55)'; ctx.lineWidth = 1; ctx.stroke();
+    }
+    for (let i = trash.length - 1; i >= 0; i--) {
+      const t = trash[i];
+      if (t.gone) { t.fade -= .06 * dt; t.y -= 1.5 * dt; if (t.fade <= 0) { trash[i] = newTrash(false); } }
+      else if (!reduce) { t.y += t.vy * dt; t.x += t.vx * dt; t.rot += t.vr * dt; }
+      if (t.y > H + 40) trash[i] = newTrash(false);
+      drawTrash(t);
+    }
+    if (!reduce) requestAnimationFrame(frame);
+  }
+  cv.addEventListener('pointerdown', e => {
+    const r = cv.getBoundingClientRect();
+    const x = e.clientX - r.left, y = e.clientY - r.top;
+    let best = null, bd = 1e9;
+    for (const t of trash) {
+      if (t.gone) continue;
+      const d = Math.hypot(t.x - x, t.y - y);
+      if (d < t.s + 14 && d < bd) { best = t; bd = d; }
+    }
+    if (best) {
+      best.gone = true; picked++; countEl.textContent = picked;
+      if (reduce) { Object.assign(best, newTrash(true)); requestAnimationFrame(frame); }
+    }
+  });
+  resize(); seed();
+  requestAnimationFrame(frame);
+  let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { resize(); seed(); if (reduce) requestAnimationFrame(frame); }, 150); });
+
+  /* ---------- Animal photos (fall back to the drawn illustration if the photo can't load) ---------- */
+  document.querySelectorAll('.pic[data-photo]').forEach(svg => {
+    const box = document.createElement('div');
+    box.className = 'media';
+    svg.replaceWith(box);
+    box.appendChild(svg);
+    const img = new Image();
+    img.alt = svg.dataset.alt; img.loading = 'lazy'; img.decoding = 'async';
+    img.addEventListener('error', () => box.classList.add('nophoto'));
+    img.src = svg.dataset.photo;
+    const a = document.createElement('a');
+    a.className = 'credit'; a.href = svg.dataset.link; a.target = '_blank'; a.rel = 'noopener';
+    a.textContent = '照片：' + svg.dataset.credit;
+    box.append(img, a);
+  });
+
+  /* ---------- Depth gauge ---------- */
+  const zones = [...document.querySelectorAll('[data-depth]')];
+  const numEl = document.getElementById('depthNum'), fillEl = document.getElementById('depthFill');
+  function updateDepth() {
+    const probe = scrollY + innerHeight * .4;
+    let depth = 0;
+    for (let i = 0; i < zones.length; i++) {
+      const top = zones[i].offsetTop, h = zones[i].offsetHeight;
+      const d0 = i ? +zones[i - 1].dataset.depth : 0, d1 = +zones[i].dataset.depth;
+      if (probe >= top) depth = d0 + (d1 - d0) * Math.min(1, (probe - top) / h);
+    }
+    numEl.textContent = Math.round(depth).toLocaleString('en-US') + ' m';
+    fillEl.style.height = (Math.sqrt(depth / 10898) * 100) + '%';
+  }
+  addEventListener('scroll', updateDepth, { passive: true });
+  addEventListener('resize', updateDepth);
+  updateDepth();
+
+  /* ---------- Decomposition chart ---------- */
+  const items = [
+    ['紙巾', .08, '2–4 週', true], ['蘋果核', .15, '約 2 個月', true], ['報紙', .12, '約 6 週', true],
+    ['塑膠袋', 20, '20 年', false], ['保麗龍杯', 50, '50 年', false], ['塑膠吸管', 200, '200 年', false],
+    ['免洗尿布', 450, '450 年', false], ['寶特瓶', 450, '450 年', false], ['釣魚線', 600, '600 年', false]
+  ].sort((a, b) => a[1] - b[1]);
+  const chart = document.getElementById('decayChart');
+  chart.innerHTML = items.map(([n, y, lbl, org], i) => {
+    const pct = Math.max(.4, y / 600 * 100);
+    return `<div class="row"><span class="name">${n}</span><div class="bar-wrap"><div class="bar${org ? ' org' : ''}" style="width:${pct}%;animation-delay:${i * 80}ms"></div><span class="yrs" style="left:${pct}%">${lbl}</span></div></div>`;
+  }).join('');
+  // keep labels inside the track for the longest bars
+  chart.querySelectorAll('.yrs').forEach(s => {
+    const l = parseFloat(s.style.left);
+    if (l > 80) { s.style.left = 'auto'; s.style.right = (100 - l) + '%'; s.style.paddingLeft = '0'; s.style.paddingRight = '8px'; s.style.color = '#1b1405'; s.style.fontWeight = '600'; }
+  });
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { chart.classList.add('go'); io.disconnect(); } }), { threshold: .3 });
+    io.observe(chart);
+  }
+
+  /* ---------- Pledge (remembered per viewer) ---------- */
+  const boxes = [...document.querySelectorAll('#pledge input')];
+  const pc = document.getElementById('pledgeCount');
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem('ocean-pledge') || '{}'); } catch (e) {}
+  boxes.forEach(b => { if (saved[b.id]) b.checked = true; });
+  function tally() {
+    pc.textContent = boxes.filter(b => b.checked).length;
+    try { localStorage.setItem('ocean-pledge', JSON.stringify(Object.fromEntries(boxes.map(b => [b.id, b.checked])))); } catch (e) {}
+  }
+  boxes.forEach(b => b.addEventListener('change', tally));
+  tally();
+})();
+</script>
+
+</body>
+</html>
